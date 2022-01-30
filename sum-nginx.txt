@@ -1,1 +1,126 @@
+NGINX
+-----
+
+cat /etc/lsb-release	#  просмотреть сведения об операционной системе;
+sudo apt install nginx	#  локальная установка nginix на deb системы;
+sudo yum install epel-release	# установка репозитория CENTOS, содержащего пакеты nginx;
+sudo yum install nginx #  локальная установка nginix на CENTOS;
+nginx # просто запуск nginx;
+systemctl status nginx	# проверка статуса nginx;
+-//- enable -//-	# включение nginx в автозагрузку;
+-//- start -//-	# запуск nginx;
+services nginx status	# проверка статуса nginx;
+-//-  -//- enable	# включение nginx в автозагрузку;
+-//-  -//- start	# запуск nginx;
+-//-  -//- reload  # перезапуск сервиса - например для пересчета конфигураций и обновления версии.
+	Сначала считывается конфигурация - если есть ошибки - сервис остается работать со старыми настройками;
+-//-  -//- restart # перезапуск сервиса - полная остановка и пересчет конфигурации перед запуском - если ошибка, не запускается;
+nginx -v  # просмотр версии;
+curl -I http://IP_host  # посмотр рапущенной версии
+
+
+---------------------------------
+Устновка nginx из исходных кодов:
+---------------------------------
+  1. Обновляем пакеты deb и устнавливаем средства компиляции исходников в бинарники:
+    sudo apt install build-essential
+  2. Скачаем исходный код nginx с сайта https://www.nginx.com/:
+    wget https://nginx.org/download/nginx-1.21.0.tar.gz
+  3. Распаковываем архив;
+  4. Устанавливаем зависимости:
+    sudo apt install libpcre3 libpcre3-dev libpcrecpp0v5 libssl-dev zlib1g-dev
+  5. Переходим в распакованную директорию и запускаем файл конфигурации с параметрами 
+    список параметров можно посмотреть: https://www.nginx.com/resources/wiki/start/topics/tutorials/installoptions/
+      список модулей и ключи для их добавления можно посмотреть на странице https://www.nginx.com/resources/wiki/modules/index.html:
+      
+    sudo ./configure --sbin-path=/usr/bin/nginx --conf-path=/etc/nginx/nginx.conf --error-log-path=/var/log/nginx/error.log --http-log-path=var/log/nginx/access.log --with-debug --with-pcre --with-http_ssl_module
+  6. запускаем сборку:
+    sudo make
+  7. Запускаем установку:
+    sudo make install
+
+// по внешнему ip адресу можно посмотреть страницу nginx по умолчанию;
+// конф. файлы хранятся в /etc/nginx;
+
+
+----------------------------------------------
+Добавление собранного вручную nginx в сервисы:
+----------------------------------------------
+// Создаем init-скрипт для nginx
+// можно скачать готовый с https://www.nginx.com/resources/wiki/start/topics/examples/initscripts/
+// либо на странице проекта Google: https://code.google.com/archive/p/nginx-init-ubuntu/
+// или с репозитория проекта на github https://raw.githubusercontent.com/JasonGiedymin/nginx-init-ubuntu/master/nginx
+
+cd /etc/init.d/   # переходим в папку скриптов и сервисов линукса;
+wget https://github.com/JasonGiedymin/nginx-init-ubuntu/blob/master/nginx   # скачиваем файл скрипта в /etc/init.d/;
+sudo chmod +x nginx   # делаем файл скрипта исполняемым;
+update-rc.d -f nginx defaults   # обновляем список сервисов - что бы ОС увидила новый сервис;
+
+// добавляем переменные, необходимые для запуска nginx (которые читает nginx скрипт) в /etc
+  echo "NGINX_CONF_FILE=/etc/nginx/nginx.conf" > /etc/default/nginx
+  echo "DAEMON=/usr/bin/nginx" >> /etc/default/nginx
+  
+  
+
+
+-----------------------
+Конфигурация (Термины):
+-----------------------
+  1. Директивы (Directives) - конкретные опции указанные в файлах конфигурации:
+    имя_опции значение_опции;   # символ ";" - обязателен после значения опции;
+  
+  2. Контексты (Contexts) - разделы в файлах конфигурации в которых могут использоваться директивы:
+    имя_контекста {
+      имя_опции значение_опции;
+      имя_вложенного_контекста {
+        имя_опции значение_опции;
+      }
+    }
+  
+  3. Основные контексты:
+    // Файл конфигурации - основной контекст, в котором настраиваются опции для мастер-процессов:
+      worker_processes 1;
+      
+    // Опции HTTP:
+      http {
+        ...
+        server {      // Эквивалент Apache VirtualHost
+          ...
+          location {  // конфигурация в зависимости от URI-запроса
+            ....
+          }
+          location {
+          ....
+          }
+        }
+        
+---------------------------------------------
+МИНИМАЛЬНЫЕ НАСТРОЙКИ ГЛАВНОЙ СТРАНИЦЫН NGINX
+---------------------------------------------
+// Главный конфигурационный файл:
+  /etc/nginx/nginx.conf
+  
+===========
+  events {}
+
+http {
+
+	types {
+		text/html html;		# воспроизводим все файлы с расширением html как html - а не текст;
+	}
+	
+	### Либо вместо контекста types вставляем директиву:
+	
+	include mime.types;
+    
+    server {
+
+        listen 80;  # слушать 80 порт;
+        server_name 84.201.142.182;     # ip адрес сервера nginx (или сайта);
+        root /sites/html-simple-personal-website-master     # корневая директория сайта;
+        
+    }
+}
+===========
+  
 
